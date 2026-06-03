@@ -292,7 +292,7 @@ let dispatches    = [];   // local history of submitted dispatches
 let destinations  = [];   // list of destination names
 let products      = [];   // finished products from stock check
 let productPhotos = {};   // name → photo URL
-let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyBMnM1TJHvjE3keqNAwj1scZeP0XQFEDxK9aWA49BlbHrkp6rKMGGToekZvPZC7_qwHw/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec' };
+let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbxAwJ82s-ohO0pN0U9r0h8gbgN0ZJjIde_k_uzD6ze0pPP1FD6RIndT_9q3b6SiCW_-pA/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec' };
 
 let header         = null;  // step 1 values
 let lines          = [];    // current dispatch lines [{product, batch, expiry, qty, unit}]
@@ -308,22 +308,44 @@ async function load() {
   document.getElementById('s-script-url').value  = settings.scriptUrl  || '';
   document.getElementById('s-stock-url').value   = settings.stockCheckUrl || '';
   document.getElementById('h-date').valueAsDate  = new Date();
-  // Pre-fill current time
   const now = new Date();
   document.getElementById('h-time').value = now.toTimeString().slice(0,5);
 
   populateDestDropdown();
   renderDestList();
 
-  if(settings.stockCheckUrl) {
+  if(settings.scriptUrl || settings.stockCheckUrl) {
     updateSync('syncing');
-    await fetchProducts();
+    await Promise.all([
+      settings.scriptUrl    ? fetchDestinations() : Promise.resolve(),
+      settings.stockCheckUrl ? fetchProducts()    : Promise.resolve()
+    ]);
     updateSync('ready');
   }
 }
 
 function persistDispatches() { localStorage.setItem(SK_DISPATCHES, JSON.stringify(dispatches)); }
 function persistDestinations(){ localStorage.setItem(SK_DESTINATIONS, JSON.stringify(destinations)); }
+
+async function api(body){
+  const res = await fetch(settings.scriptUrl, {method:'POST', body:JSON.stringify(body), headers:{'Content-Type':'text/plain'}});
+  return res.json();
+}
+
+// ── Fetch destinations from Sheets ──
+async function fetchDestinations(){
+  if(!settings.scriptUrl) return;
+  try {
+    const res = await fetch(settings.scriptUrl + '?action=getDestinations');
+    const json = await res.json();
+    if(json.destinations && json.destinations.length){
+      destinations = json.destinations;
+      persistDestinations();
+      populateDestDropdown();
+      renderDestList();
+    }
+  } catch(e){}
+}
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function fmtDate(d){ if(!d) return '—'; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
@@ -635,9 +657,16 @@ function addDestination(){
   persistDestinations(); input.value='';
   populateDestDropdown(); renderDestList();
   showToast(val+' added ✓');
+  if(settings.scriptUrl) api({action:'saveDestinations', destinations}).catch(()=>{});
 }
 function deleteDestination(i){
-  confirmCb=()=>{ destinations.splice(i,1); persistDestinations(); populateDestDropdown(); renderDestList(); showToast('Removed'); };
+  confirmCb=()=>{
+    destinations.splice(i,1);
+    persistDestinations();
+    populateDestDropdown(); renderDestList();
+    showToast('Removed');
+    if(settings.scriptUrl) api({action:'saveDestinations', destinations}).catch(()=>{});
+  };
   showConfirm('Remove destination?', `Remove "${destinations[i]}" from the list?`, 'Remove');
 }
 
