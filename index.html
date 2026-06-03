@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Dispatch</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Dispatch" />
+<meta name="theme-color" content="#1a1916" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --border:#e0ddd6; --border-strong:#c8c4bb;
+  --text:#1a1916; --text-muted:#7a776e; --text-hint:#b0ada5;
+  --accent:#1a1916; --accent-fg:#fff;
+  --success-bg:#edf7ed; --success-text:#2d6e2d;
+  --warn-bg:#fdf6e3; --warn-text:#8a6500;
+  --danger-bg:#fdecea; --danger-text:#c0392b;
+  --radius:10px; --radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* Header & tabs */
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+.app-title{font-size:17px;font-weight:400;}
+.app-title span{color:var(--text-muted);}
+.sync-badge{font-size:12px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-muted);}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:19;overflow-x:auto;}
+.tab{flex:1;min-width:60px;padding:12px 6px;font-size:13px;font-family:'Lexend',sans-serif;border:none;background:transparent;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.content{padding:16px;max-width:640px;margin:0 auto;}
+
+/* Cards & fields */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.card-label{font-size:11px;font-family:monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:12px;font-family:monospace;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
+.field input,.field select{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);appearance:none;-webkit-appearance:none;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--text-hint);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field select{background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%237a776e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.err{display:none;color:var(--danger-text);background:var(--danger-bg);border:1px solid #f5b8b3;border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;margin-bottom:12px;}
+
+/* Buttons */
+.btn{width:100%;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;cursor:pointer;border:none;transition:opacity .15s;}
+.btn-primary{background:var(--accent);color:var(--accent-fg);}
+.btn-primary:active{opacity:.85;}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border-strong);margin-top:10px;}
+.btn-sm{padding:6px 12px;font-size:13px;width:auto;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:'Lexend',sans-serif;}
+.btn-sm:active{background:var(--bg);}
+.btn-danger-sm{color:var(--danger-text);border-color:transparent;}
+
+/* Step indicator */
+.step-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.step-pill{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);}
+.step-pill.active{color:var(--text);font-weight:500;}
+.step-pill.done{color:var(--success-text);}
+.step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:11px;font-family:monospace;}
+.step-pill.active .step-num{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);}
+.step-pill.done .step-num{background:var(--success-bg);border-color:var(--success-text);color:var(--success-text);}
+.step-line{flex:1;height:1px;background:var(--border);}
+
+/* Dispatch banner */
+.dispatch-banner{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.banner-info{display:flex;flex-direction:column;gap:4px;}
+.banner-row{display:flex;gap:8px;align-items:baseline;}
+.banner-key{font-family:monospace;font-size:11px;color:var(--text-muted);min-width:80px;}
+.banner-val{font-size:13px;}
+.btn-edit{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:13px;font-family:'Lexend',sans-serif;cursor:pointer;color:var(--text-muted);flex-shrink:0;}
+
+/* Product picker */
+.picker-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px;transition:background .12s,border-color .12s;}
+.picker-card:active{background:var(--bg);border-color:var(--accent);}
+.picker-card.has-lines{border-color:#b2d9b2;background:var(--success-bg);}
+.picker-name{font-size:14px;font-weight:500;flex:1;}
+.picker-badge{font-size:11px;font-family:monospace;color:var(--success-text);background:#fff;border:1px solid #b2d9b2;border-radius:20px;padding:2px 8px;flex-shrink:0;}
+.picker-empty{text-align:center;padding:32px 16px;color:var(--text-muted);font-size:14px;}
+
+/* Dispatch lines list */
+.lines-wrap{margin-bottom:14px;}
+.line-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;}
+.line-group-header{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.line-group-photo{width:32px;height:32px;border-radius:5px;background:var(--surface);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden;}
+.line-group-photo img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+.line-group-name{font-size:14px;font-weight:500;flex:1;}
+.line-group-count{font-size:11px;font-family:monospace;color:var(--text-muted);}
+.line-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px;}
+.line-row:last-child{border-bottom:none;}
+.line-detail{flex:1;font-size:13px;}
+.line-meta{font-size:11px;font-family:monospace;color:var(--text-muted);margin-top:2px;}
+.badge{font-size:10px;font-family:monospace;padding:2px 7px;border-radius:20px;border:1px solid;}
+.badge-ok{background:var(--success-bg);color:var(--success-text);border-color:#b2d9b2;}
+.badge-warn{background:var(--warn-bg);color:var(--warn-text);border-color:#f0d88a;}
+.badge-exp{background:var(--danger-bg);color:var(--danger-text);border-color:#f5b8b3;}
+
+/* Records */
+.search-box{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);outline:none;margin-bottom:14px;}
+.rec-group{margin-bottom:20px;}
+.rec-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.rec-title{font-size:15px;font-weight:500;}
+.rec-meta{font-size:12px;color:var(--text-muted);font-family:monospace;margin-top:2px;}
+.rec-count{font-size:12px;font-family:monospace;color:var(--text-muted);}
+.rec-line{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:6px;}
+.rec-line-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.rec-line-name{font-size:14px;font-weight:500;}
+.rec-line-meta{font-size:12px;font-family:monospace;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap;}
+.empty{text-align:center;padding:48px 16px;color:var(--text-muted);font-size:14px;}
+.empty-icon{font-size:32px;margin-bottom:10px;}
+
+/* Destinations tab */
+.dest-add-row{display:flex;gap:8px;margin-bottom:16px;}
+.dest-add-row input{flex:1;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);outline:none;}
+.dest-add-row input:focus{border-color:var(--accent);}
+.dest-item{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:6px;gap:10px;}
+.dest-item-name{flex:1;font-size:14px;}
+
+/* Modal overlay */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.modal-title{font-size:16px;font-weight:500;display:flex;align-items:center;gap:10px;}
+.modal-close{font-size:22px;color:var(--text-muted);background:none;border:none;cursor:pointer;line-height:1;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-fg);padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">Dispatch <span>Log</span></div>
+  <div class="sync-badge" id="sync-status">● sheets</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('entry')" id="tab-entry">New Dispatch</button>
+  <button class="tab" onclick="showTab('records')" id="tab-records">Records</button>
+  <button class="tab" onclick="showTab('destinations')" id="tab-destinations">Destinations</button>
+  <button class="tab" onclick="showTab('settings')" id="tab-settings">Settings</button>
+</div>
+
+<div class="content">
+
+  <!-- ── NEW DISPATCH ── -->
+  <div id="panel-entry">
+    <div class="step-row">
+      <div class="step-pill active" id="sp1"><div class="step-num" id="sn1">1</div> Dispatch details</div>
+      <div class="step-line"></div>
+      <div class="step-pill" id="sp2"><div class="step-num" id="sn2">2</div> Add products</div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="step1">
+      <div class="card">
+        <div class="card-label">Dispatch details</div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="h-date" /></div>
+          <div class="field"><label>Time</label><input type="time" id="h-time" /></div>
+        </div>
+        <div class="field">
+          <label>Destination</label>
+          <select id="h-dest"><option value="">Select destination…</option></select>
+        </div>
+        <div class="field"><label>Dispatched by</label><input type="text" id="h-staff" placeholder="Your name" /></div>
+      </div>
+      <div class="err" id="err1"></div>
+      <button class="btn btn-primary" onclick="goStep2()">Continue →</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step2" style="display:none;">
+      <div class="dispatch-banner">
+        <div class="banner-info" id="banner-text"></div>
+        <button class="btn-edit" onclick="goStep1()">Edit</button>
+      </div>
+
+      <!-- Lines grouped by product -->
+      <div class="lines-wrap" id="lines-wrap"></div>
+
+      <!-- Product picker -->
+      <div class="card-label" id="picker-label" style="margin-bottom:8px;">Tap a product to add it</div>
+      <div id="product-picker"></div>
+
+      <div style="margin-top:12px;">
+        <button class="btn btn-secondary" id="save-btn" onclick="saveDispatch()" style="display:none;">Save dispatch</button>
+      </div>
+      <div class="toast-hint" id="line-count-label" style="font-size:12px;font-family:monospace;color:var(--text-muted);text-align:center;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ── RECORDS ── -->
+  <div id="panel-records" style="display:none;">
+    <input type="search" class="search-box" id="search-q" placeholder="Search product, destination, batch…" oninput="renderRecords()" />
+    <div id="records-container"></div>
+  </div>
+
+  <!-- ── DESTINATIONS ── -->
+  <div id="panel-destinations" style="display:none;">
+    <div class="card">
+      <div class="card-label">Add destination</div>
+      <div class="dest-add-row">
+        <input type="text" id="new-dest" placeholder="e.g. Edinburgh" onkeydown="if(event.key==='Enter')addDestination()" />
+        <button style="padding:11px 18px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-size:14px;font-family:'Lexend',sans-serif;cursor:pointer;" id="btn-add-dest" onclick="addDestination()">Add</button>
+      </div>
+      <div class="err" id="err-dest"></div>
+      <div style="font-size:12px;font-family:monospace;color:var(--text-muted);margin-bottom:12px;" id="dest-count"></div>
+      <div id="dest-list"></div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div id="panel-settings" style="display:none;">
+    <div class="card">
+      <div class="card-label">Google Sheets</div>
+      <div class="field"><label>Dispatch Apps Script URL</label><input type="text" id="s-script-url" placeholder="https://script.google.com/macros/s/…" /></div>
+      <div class="field"><label>Stock Check Apps Script URL <span style="font-size:10px;color:var(--text-hint);">(for product list + photos)</span></label><input type="text" id="s-stock-url" placeholder="https://script.google.com/macros/s/…" /></div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+    </div>
+    <div class="card">
+      <div class="card-label">Local data</div>
+      <button class="btn btn-secondary" style="margin-top:0;" onclick="confirmClearHistory()">Clear dispatch history from this device</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Product detail sheet -->
+<div class="modal-overlay" id="product-modal" onclick="closeProductModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div id="modal-product-photo"></div>
+        <span id="modal-product-name"></span>
+      </div>
+      <button class="modal-close" onclick="closeProductModal()">×</button>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Batch number</label><input type="text" id="m-batch" placeholder="e.g. BATCH-001" /></div>
+      <div class="field"><label>Expiry date</label><input type="date" id="m-expiry" /></div>
+    </div>
+    <div class="field">
+      <label>Quantity</label>
+      <div style="display:flex;gap:8px;">
+        <input type="number" inputmode="decimal" id="m-qty" placeholder="e.g. 12" min="1" step="1"
+          style="flex:1;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);appearance:none;outline:none;" />
+        <select id="m-unit" style="width:110px;padding:11px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);appearance:none;outline:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path d=%22M1 1l5 5 5-5%22 stroke=%22%237a776e%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;">
+          <option value="Cases">Cases</option>
+          <option value="Packets">Packets</option>
+          <option value="Units">Units</option>
+        </select>
+      </div>
+    </div>
+    <div class="err" id="err-modal" style="margin-top:8px;"></div>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="addLine()">+ Add batch</button>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:60;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:var(--radius);padding:20px;max-width:320px;width:100%;">
+    <div style="font-size:15px;font-weight:500;margin-bottom:8px;" id="confirm-title">Are you sure?</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;" id="confirm-msg"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmCancel()" style="flex:1;padding:10px;border-radius:var(--radius-sm);font-size:14px;font-family:'Lexend',sans-serif;cursor:pointer;border:1px solid var(--border);background:transparent;">Cancel</button>
+      <button onclick="confirmOk()" style="flex:1;padding:10px;border-radius:var(--radius-sm);font-size:14px;font-family:'Lexend',sans-serif;cursor:pointer;background:var(--danger-text);color:#fff;border:none;" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Configuration ──
+const SK_DISPATCHES   = 'dispatch_records_v1';
+const SK_DESTINATIONS = 'dispatch_destinations_v1';
+const SK_SETTINGS     = 'dispatch_settings_v1';
+
+// ── State ──
+let dispatches    = [];   // local history of submitted dispatches
+let destinations  = [];   // list of destination names
+let products      = [];   // finished products from stock check
+let productPhotos = {};   // name → photo URL
+let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyBMnM1TJHvjE3keqNAwj1scZeP0XQFEDxK9aWA49BlbHrkp6rKMGGToekZvPZC7_qwHw/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec' };
+
+let header         = null;  // step 1 values
+let lines          = [];    // current dispatch lines [{product, batch, expiry, qty, unit}]
+let activeProduct  = null;  // product name currently open in modal
+let confirmCb      = null;  // pending confirm callback
+
+// ── Boot ──
+async function load() {
+  try { const d = localStorage.getItem(SK_DISPATCHES);   if(d) dispatches   = JSON.parse(d); } catch(e){}
+  try { const d = localStorage.getItem(SK_DESTINATIONS); if(d) destinations = JSON.parse(d); } catch(e){}
+  try { const d = localStorage.getItem(SK_SETTINGS);     if(d) settings     = {...settings,...JSON.parse(d)}; } catch(e){}
+
+  document.getElementById('s-script-url').value  = settings.scriptUrl  || '';
+  document.getElementById('s-stock-url').value   = settings.stockCheckUrl || '';
+  document.getElementById('h-date').valueAsDate  = new Date();
+  // Pre-fill current time
+  const now = new Date();
+  document.getElementById('h-time').value = now.toTimeString().slice(0,5);
+
+  populateDestDropdown();
+  renderDestList();
+
+  if(settings.stockCheckUrl) {
+    updateSync('syncing');
+    await fetchProducts();
+    updateSync('ready');
+  }
+}
+
+function persistDispatches() { localStorage.setItem(SK_DISPATCHES, JSON.stringify(dispatches)); }
+function persistDestinations(){ localStorage.setItem(SK_DESTINATIONS, JSON.stringify(destinations)); }
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function fmtDate(d){ if(!d) return '—'; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+function fmtTime(t){ return t||'—'; }
+function expiryBadge(d){
+  if(!d) return '';
+  const diff = Math.floor((new Date(d)-new Date().setHours(0,0,0,0))/86400000);
+  if(diff<0)  return '<span class="badge badge-exp">EXPIRED</span>';
+  if(diff<=3) return '<span class="badge badge-warn">EXPIRING</span>';
+  return '<span class="badge badge-ok">VALID</span>';
+}
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function updateSync(state){
+  const el=document.getElementById('sync-status');
+  if(state==='syncing'){el.textContent='◌ syncing';el.style.color='#8a6500';}
+  else if(state==='synced'){el.textContent='✓ synced';el.style.color='#2d6e2d';}
+  else if(state==='error'){el.textContent='✗ error';el.style.color='#c0392b';}
+  else if(state==='no-url'){el.textContent='● local only';el.style.color='#b0ada5';}
+  else{el.textContent='● sheets';el.style.color='#2d6e2d';}
+}
+
+// ── Fetch products from stock check ──
+async function fetchProducts(){
+  if(!settings.stockCheckUrl) return;
+  try {
+    const res = await fetch(settings.stockCheckUrl + '?action=getFinProducts');
+    const json = await res.json();
+    if(json.products){
+      products = json.products;
+      productPhotos = {};
+      products.forEach(p => { if(p.photo) productPhotos[p.name] = p.photo; });
+    }
+  } catch(e){}
+}
+
+// ── Tabs ──
+function showTab(t){
+  ['entry','records','destinations','settings'].forEach(p=>{
+    document.getElementById('panel-'+p).style.display = p===t?'':'none';
+    document.getElementById('tab-'+p).classList.toggle('active', p===t);
+  });
+  if(t==='records')     renderRecords();
+  if(t==='destinations') renderDestList();
+}
+
+// ── Step navigation ──
+function setStep(n){
+  document.getElementById('sp1').className='step-pill'+(n===1?' active':' done');
+  document.getElementById('sn1').textContent=n===1?'1':'✓';
+  document.getElementById('sp2').className='step-pill'+(n===2?' active':'');
+}
+function goStep1(){
+  document.getElementById('step1').style.display='';
+  document.getElementById('step2').style.display='none';
+  setStep(1);
+}
+function goStep2(){
+  const date  = document.getElementById('h-date').value;
+  const time  = document.getElementById('h-time').value;
+  const dest  = document.getElementById('h-dest').value;
+  const staff = document.getElementById('h-staff').value.trim();
+  const missing = [];
+  if(!date)  missing.push('date');
+  if(!time)  missing.push('time');
+  if(!dest)  missing.push('destination');
+  if(!staff) missing.push('dispatched by');
+  const err = document.getElementById('err1');
+  if(missing.length){ err.style.display=''; err.textContent='Please fill in: '+missing.join(', '); return; }
+  err.style.display='none';
+  header = {date, time, dest, staff};
+  lines  = [];
+
+  document.getElementById('banner-text').innerHTML =
+    `<div class="banner-row"><div class="banner-key">Date</div><div class="banner-val">${fmtDate(date)} at ${fmtTime(time)}</div></div>`+
+    `<div class="banner-row"><div class="banner-key">Destination</div><div class="banner-val">${dest}</div></div>`+
+    `<div class="banner-row"><div class="banner-key">Dispatched by</div><div class="banner-val">${staff}</div></div>`;
+
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='';
+  setStep(2);
+  renderLines();
+  renderProductPicker();
+}
+
+// ── Product picker ──
+function renderProductPicker(){
+  const grid  = document.getElementById('product-picker');
+  const label = document.getElementById('picker-label');
+  if(!products.length){
+    grid.innerHTML = `<div class="picker-empty">No products found.<br><span style="font-size:13px;">Make sure the Stock Check URL is saved in Settings.</span></div>`;
+    if(label) label.style.display='none';
+    return;
+  }
+  if(label) label.style.display='';
+  grid.innerHTML = products.map(p=>{
+    const count = lines.filter(l=>l.product===p.name).length;
+    const hasLines = count > 0;
+    const badge = hasLines ? `<span class="picker-badge">×${count} batch${count!==1?'es':''}</span>` : '';
+    const photo = productPhotos[p.name];
+    const photoHtml = photo
+      ? `<img src="${photo}" onerror="this.style.display='none'" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);" />`
+      : `<div style="width:44px;height:44px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📦</div>`;
+    return `<div class="picker-card${hasLines?' has-lines':''}" onclick="openProductModal('${p.name.replace(/'/g,"\\'")}')">
+      ${photoHtml}
+      <div class="picker-name">${p.name}</div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+// ── Product modal ──
+function openProductModal(productName){
+  activeProduct = productName;
+  document.getElementById('modal-product-name').textContent = productName;
+  const photo = productPhotos[productName];
+  const photoEl = document.getElementById('modal-product-photo');
+  photoEl.innerHTML = photo
+    ? `<img src="${photo}" onerror="this.style.display='none'" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border);" />`
+    : '';
+  document.getElementById('m-batch').value  = '';
+  document.getElementById('m-expiry').value = '';
+  document.getElementById('m-qty').value    = '';
+  document.getElementById('m-unit').value   = 'Cases';
+  document.getElementById('err-modal').style.display = 'none';
+  document.getElementById('product-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('m-batch').focus(), 100);
+}
+function closeProductModal(){
+  document.getElementById('product-modal').classList.remove('open');
+  activeProduct = null;
+}
+
+// ── Lines ──
+function addLine(){
+  const batch  = document.getElementById('m-batch').value.trim();
+  const expiry = document.getElementById('m-expiry').value;
+  const qty    = document.getElementById('m-qty').value.trim();
+  const unit   = document.getElementById('m-unit').value;
+  const err    = document.getElementById('err-modal');
+  const missing = [];
+  if(!batch)  missing.push('batch number');
+  if(!expiry) missing.push('expiry date');
+  if(!qty)    missing.push('quantity');
+  if(missing.length){ err.style.display=''; err.textContent='Please fill in: '+missing.join(', '); return; }
+  err.style.display='none';
+  lines.push({id:uid(), product:activeProduct, batch, expiry, qty, unit});
+  closeProductModal();
+  renderLines();
+  renderProductPicker();
+}
+function removeLine(id){
+  lines = lines.filter(l=>l.id!==id);
+  renderLines();
+  renderProductPicker();
+}
+
+function renderLines(){
+  const wrap = document.getElementById('lines-wrap');
+  const totalLines = lines.length;
+  document.getElementById('save-btn').style.display = totalLines>0?'':'none';
+  document.getElementById('line-count-label').textContent = totalLines>0
+    ? `${totalLines} batch line${totalLines!==1?'s':''} added` : '';
+
+  if(!totalLines){ wrap.innerHTML=''; return; }
+
+  // Group lines by product
+  const grouped = {};
+  lines.forEach(l=>{
+    if(!grouped[l.product]) grouped[l.product]=[];
+    grouped[l.product].push(l);
+  });
+
+  wrap.innerHTML = Object.entries(grouped).map(([prodName, prodLines])=>{
+    const photo = productPhotos[prodName];
+    const photoHtml = photo
+      ? `<div class="line-group-photo"><img src="${photo}" onerror="this.style.display='none'" /></div>`
+      : `<div class="line-group-photo">📦</div>`;
+    const lineRows = prodLines.map(l=>`
+      <div class="line-row">
+        <div class="line-detail">
+          <div style="font-size:13px;font-weight:500;">Batch: ${l.batch}</div>
+          <div class="line-meta">Expiry: ${fmtDate(l.expiry)} · ${l.qty} ${l.unit}</div>
+        </div>
+        ${expiryBadge(l.expiry)}
+        <button class="btn-sm btn-danger-sm" onclick="removeLine('${l.id}')" style="margin-left:4px;">✕</button>
+      </div>`).join('');
+    return `<div class="line-group">
+      <div class="line-group-header">
+        ${photoHtml}
+        <div class="line-group-name">${prodName}</div>
+        <div class="line-group-count">${prodLines.length} batch${prodLines.length!==1?'es':''}</div>
+        <button class="btn-sm" onclick="openProductModal('${prodName.replace(/'/g,"\\'")}')">+ Add batch</button>
+      </div>
+      ${lineRows}
+    </div>`;
+  }).join('');
+}
+
+// ── Save dispatch ──
+async function saveDispatch(){
+  if(!lines.length) return;
+  const dispatch = {
+    id: uid(),
+    date: header.date, time: header.time,
+    dest: header.dest, staff: header.staff,
+    lines: [...lines],
+    savedAt: new Date().toISOString()
+  };
+  dispatches.unshift(dispatch);
+  persistDispatches();
+  showToast('Dispatch saved ✓');
+  lines=[]; header=null;
+  document.getElementById('h-date').valueAsDate=new Date();
+  document.getElementById('h-time').value=new Date().toTimeString().slice(0,5);
+  document.getElementById('h-dest').value='';
+  document.getElementById('h-staff').value='';
+  goStep1();
+  showTab('records');
+
+  const url = settings.scriptUrl;
+  if(!url){ updateSync('no-url'); return; }
+  updateSync('syncing');
+  try {
+    // Flatten lines into rows for Sheets
+    const rows = dispatch.lines.map(l=>({
+      date: dispatch.date, time: dispatch.time,
+      dest: dispatch.dest, staff: dispatch.staff,
+      product: l.product, batch: l.batch,
+      expiry: l.expiry, qty: l.qty, unit: l.unit,
+      savedAt: dispatch.savedAt
+    }));
+    const res = await fetch(url, {method:'POST', body:JSON.stringify({action:'saveDispatch', rows}), headers:{'Content-Type':'text/plain'}});
+    const json = await res.json();
+    updateSync(json.result==='success'?'synced':'error');
+    setTimeout(()=>updateSync('ready'),4000);
+  } catch(e){ updateSync('error'); setTimeout(()=>updateSync('ready'),4000); }
+}
+
+// ── Records ──
+function renderRecords(){
+  const q = (document.getElementById('search-q').value||'').toLowerCase();
+  const c = document.getElementById('records-container');
+  const filtered = dispatches
+    .map(d=>({...d, lines:d.lines.filter(l=>!q||[l.product,l.batch,d.dest,d.staff].some(v=>v&&v.toLowerCase().includes(q)))}))
+    .filter(d=>d.lines.length>0);
+  if(!filtered.length){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">🚚</div>${dispatches.length?'No results match your search':'No dispatches recorded yet'}</div>`;
+    return;
+  }
+  // Group lines by product within each dispatch
+  c.innerHTML = filtered.map(d=>{
+    const grouped={};
+    d.lines.forEach(l=>{ if(!grouped[l.product]) grouped[l.product]=[]; grouped[l.product].push(l); });
+    const lineHtml = Object.entries(grouped).map(([prod,pLines])=>`
+      <div class="rec-line">
+        <div class="rec-line-top">
+          <div class="rec-line-name">${prod}</div>
+          <span style="font-size:11px;font-family:monospace;color:var(--text-muted);">${pLines.length} batch${pLines.length!==1?'es':''}</span>
+        </div>
+        ${pLines.map(l=>`<div class="rec-line-meta" style="margin-top:4px;">
+          <span>Batch: ${l.batch}</span><span>Expiry: ${fmtDate(l.expiry)}</span><span>Qty: ${l.qty} ${l.unit}</span>${expiryBadge(l.expiry)}
+        </div>`).join('')}
+      </div>`).join('');
+    return `<div class="rec-group">
+      <div class="rec-header">
+        <div><div class="rec-title">${d.dest}</div><div class="rec-meta">${fmtDate(d.date)} at ${fmtTime(d.time)} · ${d.staff}</div></div>
+        <div class="rec-count">${d.lines.length} line${d.lines.length!==1?'s':''}</div>
+      </div>${lineHtml}
+    </div>`;
+  }).join('<hr style="border:none;border-top:1px solid var(--border);margin:0 0 16px;">');
+}
+
+// ── Destinations ──
+function populateDestDropdown(){
+  const sel=document.getElementById('h-dest');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select destination…</option>';
+  destinations.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o); });
+  if(cur) sel.value=cur;
+}
+function renderDestList(){
+  const list=document.getElementById('dest-list');
+  const count=document.getElementById('dest-count');
+  if(!list) return;
+  count.textContent=destinations.length?`${destinations.length} destination${destinations.length!==1?'s':''}`:'' ;
+  if(!destinations.length){ list.innerHTML='<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">No destinations yet — add one above.</div>'; return; }
+  list.innerHTML=destinations.map((d,i)=>`
+    <div class="dest-item">
+      <div class="dest-item-name">${d}</div>
+      <button class="btn-sm btn-danger-sm" onclick="deleteDestination(${i})">✕</button>
+    </div>`).join('');
+}
+function addDestination(){
+  const input=document.getElementById('new-dest');
+  const val=input.value.trim();
+  const err=document.getElementById('err-dest');
+  if(!val){ err.style.display=''; err.textContent='Please enter a destination name.'; return; }
+  if(destinations.includes(val)){ err.style.display=''; err.textContent=`"${val}" already exists.`; return; }
+  err.style.display='none';
+  destinations.push(val); destinations.sort();
+  persistDestinations(); input.value='';
+  populateDestDropdown(); renderDestList();
+  showToast(val+' added ✓');
+}
+function deleteDestination(i){
+  confirmCb=()=>{ destinations.splice(i,1); persistDestinations(); populateDestDropdown(); renderDestList(); showToast('Removed'); };
+  showConfirm('Remove destination?', `Remove "${destinations[i]}" from the list?`, 'Remove');
+}
+
+// ── Settings ──
+function saveSettings(){
+  settings.scriptUrl    = document.getElementById('s-script-url').value.trim();
+  settings.stockCheckUrl= document.getElementById('s-stock-url').value.trim();
+  localStorage.setItem(SK_SETTINGS, JSON.stringify(settings));
+  updateSync(settings.scriptUrl?'ready':'no-url');
+  if(settings.stockCheckUrl){ updateSync('syncing'); fetchProducts().then(()=>{ updateSync('ready'); renderProductPicker(); }); }
+  showToast('Settings saved ✓');
+}
+
+// ── Confirm dialog ──
+function showConfirm(title, msg, okLabel='Confirm'){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok-btn').textContent=okLabel;
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+function confirmOk(){ document.getElementById('confirm-overlay').style.display='none'; if(confirmCb) confirmCb(); confirmCb=null; }
+function confirmCancel(){ document.getElementById('confirm-overlay').style.display='none'; confirmCb=null; }
+function confirmClearHistory(){
+  confirmCb=()=>{ dispatches=[]; persistDispatches(); renderRecords(); showToast('History cleared'); };
+  showConfirm('Clear history?','This removes all dispatch records from this device only. Data already in Sheets is not affected.','Clear');
+}
+
+load();
+</script>
+</body>
+</html>
