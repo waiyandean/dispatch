@@ -260,8 +260,11 @@ body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-
       </div>
     </div>
     <div class="err" id="err-modal" style="margin-top:8px;"></div>
-    <button class="btn btn-primary" style="margin-top:14px;" onclick="addLine()">+ Add batch</button>
-  </div>
+    <div id="batch-added-msg" style="display:none;color:var(--success-text);background:var(--success-bg);border:1px solid #b2d9b2;border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;margin-top:8px;">✓ Batch added — fill in another or tap Done.</div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="addLine()">+ Add batch</button>
+      <button class="btn btn-secondary" style="flex:0 0 auto;margin-top:0;padding:13px 20px;" onclick="closeProductModal()">Done</button>
+    </div>
 </div>
 
 <!-- Confirm dialog -->
@@ -445,6 +448,7 @@ function openProductModal(productName){
   document.getElementById('m-qty').value    = '';
   document.getElementById('m-unit').value   = 'Cases';
   document.getElementById('err-modal').style.display = 'none';
+  document.getElementById('batch-added-msg').style.display = 'none';
   document.getElementById('product-modal').classList.add('open');
   setTimeout(()=>document.getElementById('m-batch').focus(), 100);
 }
@@ -467,7 +471,14 @@ function addLine(){
   if(missing.length){ err.style.display=''; err.textContent='Please fill in: '+missing.join(', '); return; }
   err.style.display='none';
   lines.push({id:uid(), product:activeProduct, batch, expiry, qty, unit});
-  closeProductModal();
+  // Keep modal open — clear fields for the next batch
+  document.getElementById('m-batch').value  = '';
+  document.getElementById('m-expiry').value = '';
+  document.getElementById('m-qty').value    = '';
+  document.getElementById('m-unit').value   = 'Cases';
+  document.getElementById('batch-added-msg').style.display = '';
+  setTimeout(()=>document.getElementById('batch-added-msg').style.display='none', 3000);
+  document.getElementById('m-batch').focus();
   renderLines();
   renderProductPicker();
 }
