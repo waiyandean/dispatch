@@ -243,8 +243,8 @@ body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-
       </div>
       <button class="modal-close" onclick="closeProductModal()">×</button>
     </div>
-    <div class="field"><label>Batch number</label><input type="text" id="m-batch" placeholder="e.g. BATCH-001" /></div>
-    <div class="field"><label>Expiry date</label><input type="date" id="m-expiry" /></div>
+    <div class="field"><label>Batch number</label><input type="text" id="m-batch" placeholder="e.g. 2412GA" /></div>
+    <div class="field"><label>Expiry date <span id="expiry-hint" style="font-size:10px;color:var(--text-hint);font-family:monospace;"></span></label><input type="date" id="m-expiry" /></div>
     <div class="field">
       <label>Quantity</label>
       <div style="display:flex;gap:8px;">
@@ -346,6 +346,14 @@ async function fetchDestinations(){
 }
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function updateExpiryHint(){
+  const hint = document.getElementById('expiry-hint');
+  if(!hint) return;
+  const d = new Date();
+  d.setMonth(d.getMonth() + 6);
+  hint.textContent = '(6 months: ' + d.toLocaleDateString('en-GB') + ')';
+}
+updateExpiryHint();
 function fmtDate(d){ if(!d) return '—'; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
 function fmtTime(t){ return t||'—'; }
 function expiryBadge(d){
@@ -464,9 +472,12 @@ function openProductModal(productName){
     ? `<img src="${photo}" onerror="this.style.display='none'" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border);" />`
     : '';
   document.getElementById('m-batch').value  = '';
-  document.getElementById('m-expiry').value = '';
   document.getElementById('m-qty').value    = '';
   document.getElementById('m-unit').value   = 'Cases';
+  // Pre-fill expiry to 5 months from today
+  const expDate = new Date();
+  expDate.setMonth(expDate.getMonth() + 5);
+  document.getElementById('m-expiry').value = expDate.toISOString().split('T')[0];
   document.getElementById('err-modal').style.display = 'none';
   document.getElementById('batch-added-msg').style.display = 'none';
   document.getElementById('product-modal').classList.add('open');
@@ -493,9 +504,12 @@ function addLine(){
   lines.push({id:uid(), product:activeProduct, batch, expiry, qty, unit});
   // Keep modal open — clear fields for the next batch
   document.getElementById('m-batch').value  = '';
-  document.getElementById('m-expiry').value = '';
   document.getElementById('m-qty').value    = '';
   document.getElementById('m-unit').value   = 'Cases';
+  // Pre-fill expiry to 5 months from today
+  const expDate = new Date();
+  expDate.setMonth(expDate.getMonth() + 5);
+  document.getElementById('m-expiry').value = expDate.toISOString().split('T')[0];
   document.getElementById('batch-added-msg').style.display = '';
   setTimeout(()=>document.getElementById('batch-added-msg').style.display='none', 3000);
   document.getElementById('m-batch').focus();
