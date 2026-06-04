@@ -243,6 +243,11 @@ body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-
       <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
     </div>
     <div class="card">
+      <div class="card-label">Product shelf life</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Sets how far ahead to auto-calculate expiry dates from batch numbers.</p>
+      <div id="shelf-life-list"><div style="font-size:13px;color:var(--text-muted);">No products loaded yet — save your Stock Check URL above.</div></div>
+    </div>
+    <div class="card">
       <div class="card-label">Local data</div>
       <button class="btn btn-secondary" style="margin-top:0;" onclick="confirmClearHistory()">Clear dispatch history from this device</button>
     </div>
@@ -277,12 +282,13 @@ body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-
 
     <!-- Add a batch -->
     <div style="font-size:11px;font-family:monospace;color:var(--text-muted);letter-spacing:.06em;margin-bottom:8px;">ADD BATCH</div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <input type="text" id="m-batch-new" placeholder="Batch number" onkeydown="if(event.key==='Enter')addBatchRow()"
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <input type="text" id="m-batch-new" placeholder="e.g. 2106" onkeydown="if(event.key==='Enter')addBatchRow()" oninput="onBatchInput()"
         style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);outline:none;" />
       <input type="date" id="m-expiry-new"
         style="width:148px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;background:var(--surface);color:var(--text);outline:none;" />
     </div>
+    <div id="batch-auto-hint" style="display:none;font-size:11px;font-family:monospace;color:var(--success-text);margin-bottom:8px;"></div>
     <button onclick="addBatchRow()" style="width:100%;padding:11px;border-radius:var(--radius-sm);font-size:14px;font-family:'Lexend',sans-serif;cursor:pointer;border:1px solid var(--border-strong);background:transparent;color:var(--text);">+ Add batch</button>
     <div class="err" id="err-modal" style="margin-top:10px;"></div>
 
@@ -321,7 +327,7 @@ let dispatches    = [];   // local history of submitted dispatches
 let destinations  = [];   // list of destination names
 let products      = [];   // finished products from stock check
 let productPhotos = {};   // name → photo URL
-let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbxAwJ82s-ohO0pN0U9r0h8gbgN0ZJjIde_k_uzD6ze0pPP1FD6RIndT_9q3b6SiCW_-pA/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec' };
+let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbxAwJ82s-ohO0pN0U9r0h8gbgN0ZJjIde_k_uzD6ze0pPP1FD6RIndT_9q3b6SiCW_-pA/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec', shelfLife:{} };
 
 let header         = null;  // step 1 values
 let lines          = [];    // current dispatch lines [{product, batch, expiry, qty, unit}]
@@ -419,6 +425,7 @@ function showTab(t){
   });
   if(t==='records')     renderRecords();
   if(t==='destinations') renderDestList();
+  if(t==='settings')    renderShelfLifeSettings();
 }
 
 // ── Step navigation ──
@@ -767,8 +774,79 @@ function saveSettings(){
   settings.stockCheckUrl= document.getElementById('s-stock-url').value.trim();
   localStorage.setItem(SK_SETTINGS, JSON.stringify(settings));
   updateSync(settings.scriptUrl?'ready':'no-url');
-  if(settings.stockCheckUrl){ updateSync('syncing'); fetchProducts().then(()=>{ updateSync('ready'); renderProductPicker(); }); }
+  if(settings.stockCheckUrl){ updateSync('syncing'); fetchProducts().then(()=>{ updateSync('ready'); renderProductPicker(); renderShelfLifeSettings(); }); }
   showToast('Settings saved ✓');
+}
+
+// ── Shelf life ──
+function setShelfLife(productName, months){
+  if(!settings.shelfLife) settings.shelfLife={};
+  settings.shelfLife[productName]=months;
+  localStorage.setItem(SK_SETTINGS, JSON.stringify(settings));
+  renderShelfLifeSettings();
+  showToast('Shelf life updated ✓');
+}
+function renderShelfLifeSettings(){
+  const c=document.getElementById('shelf-life-list');
+  if(!c) return;
+  if(!products.length){
+    c.innerHTML='<div style="font-size:13px;color:var(--text-muted);">No products loaded yet — save your Stock Check URL above.</div>';
+    return;
+  }
+  const sl=settings.shelfLife||{};
+  c.innerHTML=products.map(p=>{
+    const cur=sl[p.name]||6;
+    const btn=(months,label)=>{
+      const active=cur===months;
+      return `<button onclick="setShelfLife('${p.name.replace(/'/g,"\\'")}',${months})"
+        style="padding:5px 14px;border-radius:20px;font-size:12px;font-family:'Lexend',sans-serif;cursor:pointer;
+        border:1px solid ${active?'var(--accent)':'var(--border)'};
+        background:${active?'var(--accent)':'transparent'};
+        color:${active?'var(--accent-fg)':'var(--text-muted)'};">${label}</button>`;
+    };
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;">${p.name}</span>
+      <div style="display:flex;gap:6px;">${btn(6,'6 months')}${btn(12,'12 months')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Batch number auto-complete + expiry calculation ──
+function parseBatchDate(batchNo){
+  const m=batchNo.match(/^(\d{2})(\d{2})/);
+  if(!m) return null;
+  const day=parseInt(m[1]), month=parseInt(m[2])-1;
+  if(day<1||day>31||month<0||month>11) return null;
+  const now=new Date();
+  let year=now.getFullYear();
+  const candidate=new Date(year,month,day);
+  // If the date is more than 7 days in the future, it's likely last year's batch
+  if(candidate.getTime()>now.getTime()+7*24*60*60*1000) year--;
+  return new Date(year,month,day);
+}
+function onBatchInput(){
+  const input=document.getElementById('m-batch-new');
+  let val=input.value;
+  // Auto-append GA suffix after exactly 4 digits are typed
+  if(/^\d{4}$/.test(val)){
+    input.value=val+'GA';
+    val=input.value;
+  }
+  // Auto-fill expiry from any value starting with 4 digits
+  const hint=document.getElementById('batch-auto-hint');
+  if(val.length>=4){
+    const batchDate=parseBatchDate(val);
+    if(batchDate){
+      const months=(settings.shelfLife||{})[activeProduct]||6;
+      const exp=new Date(batchDate);
+      exp.setMonth(exp.getMonth()+months);
+      document.getElementById('m-expiry-new').value=exp.toISOString().split('T')[0];
+      hint.textContent=`✓ Auto: ${months}-month shelf life · expires ${fmtDate(exp.toISOString().split('T')[0])}`;
+      hint.style.display='';
+      return;
+    }
+  }
+  hint.style.display='none';
 }
 
 // ── Confirm dialog ──
