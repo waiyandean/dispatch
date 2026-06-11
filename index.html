@@ -569,17 +569,17 @@ function renderModalBatchList(){
   btn.textContent = total>0 ? `Done  ·  ${total} ${unit}` : 'Done';
   list.innerHTML = modalDraftLines.map(l=>`
     <div class="batch-row">
+      <button class="btn-sm btn-danger-sm" onclick="removeModalBatch('${l.id}')" style="margin-right:4px;padding:6px 10px;">✕</button>
       <div class="batch-row-info">
         <div class="batch-row-no">${l.batch}</div>
         <div class="batch-row-exp">Exp: ${fmtDate(l.expiry)} ${expiryBadge(l.expiry)}</div>
       </div>
       <div class="stepper">
         <button class="stepper-btn" onclick="decrementBatch('${l.id}')">−</button>
-        <input class="stepper-input" type="number" inputmode="numeric" min="0" value="${l.qty}"
+        <input class="stepper-input" type="text" inputmode="numeric" value="${l.qty}"
           oninput="setBatchQty('${l.id}',this.value);renderModalBatchList()" />
         <button class="stepper-btn" onclick="incrementBatch('${l.id}')">+</button>
       </div>
-      <button class="btn-sm btn-danger-sm" onclick="removeModalBatch('${l.id}')" style="margin-left:2px;">✕</button>
     </div>`).join('');
 }
 
