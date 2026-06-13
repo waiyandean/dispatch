@@ -68,7 +68,8 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .btn-secondary:active{background:var(--glass-mid);}
 .btn-sm{padding:6px 12px;font-size:13px;width:auto;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--text-muted);cursor:pointer;font-family:'Lexend',sans-serif;}
 .btn-sm:active{background:var(--glass-mid);}
-.btn-danger-sm{color:var(--danger-text);border-color:transparent;background:transparent;}
+.btn-danger-sm{width:28px;height:28px;padding:0;border-radius:50%;border:1px solid rgba(192,57,43,0.28);background:rgba(253,236,234,0.68);backdrop-filter:blur(12px) saturate(1.6);-webkit-backdrop-filter:blur(12px) saturate(1.6);color:#b03020;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(192,57,43,0.14),inset 0 1px 0 rgba(255,255,255,0.72);}
+.btn-danger-sm:active{background:rgba(253,236,234,0.9);}
 
 /* Batch stepper */
 .batch-row{display:flex;align-items:center;gap:10px;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.7);border-radius:var(--radius-sm);box-shadow:0 2px 8px rgba(26,25,22,0.04),inset 0 1px 0 rgba(255,255,255,0.8);padding:10px 12px;margin-bottom:6px;}
@@ -159,7 +160,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .modal-box{background:rgba(255,255,255,0.88);backdrop-filter:blur(28px) saturate(1.6);-webkit-backdrop-filter:blur(28px) saturate(1.6);border:1px solid rgba(255,255,255,0.9);border-radius:var(--radius) var(--radius) 0 0;box-shadow:0 -8px 40px rgba(26,25,22,0.1);padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .modal-title{font-size:16px;font-weight:500;display:flex;align-items:center;gap:10px;}
-.modal-close{font-size:22px;color:var(--text-muted);background:none;border:none;cursor:pointer;line-height:1;}
+.modal-close{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,0.72);background:rgba(255,255,255,0.52);backdrop-filter:blur(12px) saturate(1.5);-webkit-backdrop-filter:blur(12px) saturate(1.5);font-size:17px;font-weight:700;color:var(--text-muted);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(26,25,22,0.08),inset 0 1px 0 rgba(255,255,255,0.9);}
 
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(26,25,22,0.88);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap;}
@@ -631,7 +632,7 @@ function renderModalBatchList(){
   btn.textContent = total>0 ? `Done  ·  ${total} ${unit}` : 'Done';
   list.innerHTML = modalDraftLines.map(l=>`
     <div class="batch-row">
-      <button class="btn-sm btn-danger-sm" onclick="removeModalBatch('${l.id}')" style="margin-right:4px;padding:6px 10px;">✕</button>
+      <button class="btn-sm btn-danger-sm" onclick="removeModalBatch('${l.id}')">✕</button>
       <div class="batch-row-info">
         <div class="batch-row-no">${l.batch}</div>
         <div class="batch-row-exp">Exp: ${fmtDate(l.expiry)} ${expiryBadge(l.expiry)}</div>
@@ -698,7 +699,7 @@ function renderLines(){
           <div class="line-meta">Expiry: ${fmtDate(l.expiry)} · ${l.qty} ${l.unit}</div>
         </div>
         ${expiryBadge(l.expiry)}
-        <button class="btn-sm btn-danger-sm" onclick="removeLine('${l.id}')" style="margin-left:4px;">✕</button>
+        <button class="btn-sm btn-danger-sm" onclick="removeLine('${l.id}')">✕</button>
       </div>`).join('');
     return `<div class="line-group">
       <div class="line-group-header">
