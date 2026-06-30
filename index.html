@@ -58,7 +58,30 @@ body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-
 .field select{background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%237a776e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
 input[type="date"],input[type="time"]{color-scheme:light;}
 input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator{opacity:.45;cursor:pointer;border-radius:3px;}
+
+/* Temperature input with unit suffix */
+.temp-row{display:flex;align-items:center;gap:8px;}
+.temp-row input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:'Lexend',sans-serif;background:#fff;color:var(--text);appearance:none;-webkit-appearance:none;outline:none;color-scheme:light;}
+.temp-row input:focus{border-color:var(--text);}
+.temp-row input::placeholder{color:var(--text-hint);}
+.temp-unit{font-family:monospace;font-size:15px;color:var(--text-muted);flex-shrink:0;}
+
+/* Transport / vehicle checks */
+.check-group{margin-bottom:14px;}
+.check-group:last-child{margin-bottom:0;}
+.check-group-label{font-size:11px;font-family:monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:baseline;gap:6px;}
+.check-group-label span{font-size:10px;color:var(--text-hint);text-transform:none;letter-spacing:0;}
+.check-selector{display:flex;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);}
+.check-btn{flex:1;padding:10px 8px;font-size:13px;font-family:'Lexend',sans-serif;border:none;border-right:1px solid var(--border);background:var(--bg);color:var(--text-muted);cursor:pointer;transition:background .1s,color .1s;text-align:center;}
+.check-btn:last-child{border-right:none;}
+.check-btn.check-na-active{background:var(--surface);color:var(--text);font-weight:500;}
+.check-btn.check-pass-active{background:var(--success-bg);color:var(--success-text);font-weight:500;}
+.check-btn.check-fail-active{background:var(--danger-bg);color:var(--danger-text);font-weight:500;}
+.check-detail{margin-top:8px;}
+
+/* Alerts */
 .err{display:none;color:var(--danger-text);background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;margin-bottom:12px;}
+.alert-warn{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:var(--radius-sm);padding:10px 13px;font-size:13px;color:var(--warn-text);margin-bottom:12px;}
 
 /* Buttons */
 .btn{width:100%;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-family:'Lexend',sans-serif;cursor:pointer;border:none;transition:opacity .15s;}
@@ -98,11 +121,12 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .step-line{flex:1;height:1px;background:var(--border);}
 
 /* Dispatch banner */
-.dispatch-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.banner-info{display:flex;flex-direction:column;gap:4px;}
+.dispatch-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.banner-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;}
 .banner-row{display:flex;gap:8px;align-items:baseline;}
-.banner-key{font-family:monospace;font-size:11px;color:var(--text-muted);min-width:80px;}
+.banner-key{font-family:monospace;font-size:11px;color:var(--text-muted);min-width:80px;flex-shrink:0;}
 .banner-val{font-size:13px;}
+.banner-checks{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
 .btn-edit{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:13px;font-family:'Lexend',sans-serif;cursor:pointer;color:var(--text-muted);flex-shrink:0;}
 .btn-edit:active{background:var(--border);}
 
@@ -139,6 +163,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .rec-title{font-size:15px;font-weight:500;}
 .rec-meta{font-size:12px;color:var(--text-muted);font-family:monospace;margin-top:2px;}
 .rec-count{font-size:12px;font-family:monospace;color:var(--text-muted);}
+.rec-checks{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
 .rec-line{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:6px;}
 .rec-line-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
 .rec-line-name{font-size:14px;font-weight:500;}
@@ -207,6 +232,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
     <!-- Step 1 -->
     <div id="step1">
+
       <div class="card">
         <div class="card-label">Dispatch details</div>
         <div class="field-row">
@@ -219,6 +245,66 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
         </div>
         <div class="field"><label>Dispatched by</label><input type="text" id="h-staff" placeholder="Your name" /></div>
       </div>
+
+      <div class="card">
+        <div class="card-label">Transport &amp; vehicle checks</div>
+
+        <!-- Chilled -->
+        <div class="check-group">
+          <div class="check-group-label">Chilled transport <span>≤ 8 °C</span></div>
+          <div class="check-selector" id="check-chill">
+            <button class="check-btn check-na-active" data-result="na" onclick="setCheck('chill','na')">N/A</button>
+            <button class="check-btn" data-result="pass" onclick="setCheck('chill','pass')">✓ Pass</button>
+            <button class="check-btn" data-result="fail" onclick="setCheck('chill','fail')">✗ Fail</button>
+          </div>
+          <div id="chill-temp-row" class="check-detail" style="display:none;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Temperature recorded</label>
+              <div class="temp-row">
+                <input type="number" id="chill-temp" step="0.1" placeholder="e.g. 4.5" />
+                <span class="temp-unit">°C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frozen -->
+        <div class="check-group">
+          <div class="check-group-label">Frozen transport <span>≤ −18 °C</span></div>
+          <div class="check-selector" id="check-frozen">
+            <button class="check-btn check-na-active" data-result="na" onclick="setCheck('frozen','na')">N/A</button>
+            <button class="check-btn" data-result="pass" onclick="setCheck('frozen','pass')">✓ Pass</button>
+            <button class="check-btn" data-result="fail" onclick="setCheck('frozen','fail')">✗ Fail</button>
+          </div>
+          <div id="frozen-temp-row" class="check-detail" style="display:none;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Temperature recorded</label>
+              <div class="temp-row">
+                <input type="number" id="frozen-temp" step="0.1" placeholder="e.g. −20" />
+                <span class="temp-unit">°C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vehicle condition -->
+        <div class="check-group">
+          <div class="check-group-label">Vehicle condition</div>
+          <div class="check-selector" id="check-vehicle">
+            <button class="check-btn check-na-active" data-result="na" onclick="setCheck('vehicle','na')">N/A</button>
+            <button class="check-btn" data-result="pass" onclick="setCheck('vehicle','pass')">✓ Pass</button>
+            <button class="check-btn" data-result="fail" onclick="setCheck('vehicle','fail')">✗ Fail</button>
+          </div>
+          <div id="vehicle-notes-row" class="check-detail" style="display:none;">
+            <div class="field" style="margin-bottom:0;">
+              <label>Notes <span style="font-size:10px;color:var(--text-hint);">(optional)</span></label>
+              <input type="text" id="vehicle-notes" placeholder="Any observations…" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <div class="err" id="err1"></div>
       <button class="btn btn-primary" onclick="goStep2()">Continue →</button>
     </div>
@@ -229,6 +315,8 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
         <div class="banner-info" id="banner-text"></div>
         <button class="btn-edit" onclick="goStep1()">Edit</button>
       </div>
+
+      <div class="alert-warn" id="check-fail-warn" style="display:none;"></div>
 
       <div class="lines-wrap" id="lines-wrap"></div>
 
@@ -349,15 +437,22 @@ let products      = [];
 let productPhotos = {};
 let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyrvOhAIE7VvL6CbvHMMTSotaEKH0PkOkh2xv05r8B3mFPX3gwprmEjKa-W36VudTES1w/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec', shelfLife:{} };
 
-let header         = null;
-let lines          = [];
-let activeProduct  = null;
+let header          = null;
+let lines           = [];
+let activeProduct   = null;
 let modalDraftLines = [];
-let confirmCb      = null;
+let confirmCb       = null;
 
 let sheetsDispatches = [];
 let sheetsFetched    = false;
 let sheetsFetching   = false;
+
+// Check state persists across step 1 ↔ step 2; reset only after a successful save
+let checks = {
+  chill:   { result: 'na', temp: '' },
+  frozen:  { result: 'na', temp: '' },
+  vehicle: { result: 'na', notes: '' }
+};
 
 // ── Boot ──
 async function load() {
@@ -385,8 +480,8 @@ async function load() {
   }
 }
 
-function persistDispatches() { localStorage.setItem(SK_DISPATCHES, JSON.stringify(dispatches)); }
-function persistDestinations(){ localStorage.setItem(SK_DESTINATIONS, JSON.stringify(destinations)); }
+function persistDispatches()   { localStorage.setItem(SK_DISPATCHES,   JSON.stringify(dispatches));   }
+function persistDestinations() { localStorage.setItem(SK_DESTINATIONS, JSON.stringify(destinations)); }
 
 async function api(body){
   const res = await fetch(settings.scriptUrl, {method:'POST', body:JSON.stringify(body), headers:{'Content-Type':'text/plain'}});
@@ -417,7 +512,12 @@ async function fetchSheetDispatches(){
       const map = new Map();
       data.dispatches.forEach(r => {
         const key = [r.date, r.time, r.dest, r.staff].join('|');
-        if(!map.has(key)) map.set(key, {date:r.date, time:r.time, dest:r.dest, staff:r.staff, lines:[], savedAt:r.savedAt});
+        if(!map.has(key)) map.set(key, {
+          date:r.date, time:r.time, dest:r.dest, staff:r.staff, lines:[], savedAt:r.savedAt,
+          chilledResult:r.chilledResult, chilledTemp:r.chilledTemp,
+          frozenResult:r.frozenResult,   frozenTemp:r.frozenTemp,
+          vehicleResult:r.vehicleResult, vehicleNotes:r.vehicleNotes
+        });
         map.get(key).lines.push({product:r.product, batch:r.batch, expiry:r.expiry, qty:r.qty, unit:r.unit});
       });
       sheetsDispatches = Array.from(map.values());
@@ -475,6 +575,50 @@ async function fetchProducts(){
   } catch(e){}
 }
 
+// ── Transport / vehicle checks ──
+function setCheck(type, result) {
+  checks[type].result = result;
+  document.querySelectorAll(`#check-${type} .check-btn`).forEach(b => {
+    const r = b.dataset.result;
+    b.classList.toggle('check-na-active',   r === result && result === 'na');
+    b.classList.toggle('check-pass-active', r === result && result === 'pass');
+    b.classList.toggle('check-fail-active', r === result && result === 'fail');
+  });
+  const showDetail = result !== 'na';
+  if(type === 'vehicle') {
+    document.getElementById('vehicle-notes-row').style.display = showDetail ? '' : 'none';
+  } else {
+    document.getElementById(`${type}-temp-row`).style.display = showDetail ? '' : 'none';
+  }
+}
+
+function resetChecks() {
+  ['chill','frozen','vehicle'].forEach(t => {
+    checks[t] = { result:'na', temp:'', notes:'' };
+    setCheck(t, 'na');
+  });
+  document.getElementById('chill-temp').value    = '';
+  document.getElementById('frozen-temp').value   = '';
+  document.getElementById('vehicle-notes').value = '';
+}
+
+function checkBadgesHtml(d) {
+  const items = [];
+  const mkBadge = (label, result, val) => {
+    if(!result || result === 'na') return null;
+    const ok = result === 'pass';
+    const extra = val ? ` ${parseFloat(val)}°C` : '';
+    return `<span class="badge ${ok ? 'badge-ok' : 'badge-exp'}">${label}${extra} ${ok ? '✓' : '✗'}</span>`;
+  };
+  [
+    mkBadge('Chilled', d.chilledResult, d.chilledTemp),
+    mkBadge('Frozen',  d.frozenResult,  d.frozenTemp),
+    mkBadge('Vehicle', d.vehicleResult, null)
+  ].forEach(x => x && items.push(x));
+  if(!items.length) return '';
+  return `<div class="rec-checks">${items.join('')}</div>`;
+}
+
 // ── Tabs ──
 function showTab(t){
   ['entry','records','destinations','settings'].forEach(p=>{
@@ -513,13 +657,46 @@ function goStep2(){
   const err = document.getElementById('err1');
   if(missing.length){ err.style.display=''; err.textContent='Please fill in: '+missing.join(', '); return; }
   err.style.display='none';
-  header = {date, time, dest, staff};
-  lines  = [];
+
+  checks.chill.temp    = document.getElementById('chill-temp').value;
+  checks.frozen.temp   = document.getElementById('frozen-temp').value;
+  checks.vehicle.notes = document.getElementById('vehicle-notes').value.trim();
+
+  header = {
+    date, time, dest, staff,
+    chilledResult: checks.chill.result,  chilledTemp:  checks.chill.temp,
+    frozenResult:  checks.frozen.result,  frozenTemp:  checks.frozen.temp,
+    vehicleResult: checks.vehicle.result, vehicleNotes: checks.vehicle.notes
+  };
+  lines = [];
+
+  // Build check summary for banner
+  const checkBits = [];
+  if(header.chilledResult !== 'na') checkBits.push(`Chilled${header.chilledTemp ? ' '+header.chilledTemp+'°C' : ''}: ${header.chilledResult === 'pass' ? '✓' : '✗'}`);
+  if(header.frozenResult  !== 'na') checkBits.push(`Frozen${header.frozenTemp ? ' '+header.frozenTemp+'°C' : ''}: ${header.frozenResult  === 'pass' ? '✓' : '✗'}`);
+  if(header.vehicleResult !== 'na') checkBits.push(`Vehicle: ${header.vehicleResult === 'pass' ? '✓' : '✗'}`);
+  const checksRow = checkBits.length
+    ? `<div class="banner-checks">${checkBits.map(b=>`<span style="font-size:12px;font-family:monospace;">${b}</span>`).join('<span style="color:var(--text-hint);padding:0 2px;">·</span>')}</div>`
+    : '';
 
   document.getElementById('banner-text').innerHTML =
     `<div class="banner-row"><div class="banner-key">Date</div><div class="banner-val">${fmtDate(date)} at ${fmtTime(time)}</div></div>`+
     `<div class="banner-row"><div class="banner-key">Destination</div><div class="banner-val">${dest}</div></div>`+
-    `<div class="banner-row"><div class="banner-key">Dispatched by</div><div class="banner-val">${staff}</div></div>`;
+    `<div class="banner-row"><div class="banner-key">Dispatched by</div><div class="banner-val">${staff}</div></div>`+
+    checksRow;
+
+  // Show warning if any check failed
+  const failed = [];
+  if(header.chilledResult === 'fail') failed.push('chilled transport');
+  if(header.frozenResult  === 'fail') failed.push('frozen transport');
+  if(header.vehicleResult === 'fail') failed.push('vehicle condition');
+  const warn = document.getElementById('check-fail-warn');
+  if(failed.length){
+    warn.style.display = '';
+    warn.textContent = `⚠ Failed check: ${failed.join(', ')}. Notify your supervisor before proceeding.`;
+  } else {
+    warn.style.display = 'none';
+  }
 
   document.getElementById('step1').style.display='none';
   document.getElementById('step2').style.display='';
@@ -592,22 +769,10 @@ function addBatchRow(){
   renderModalBatchList();
 }
 
-function incrementBatch(id){
-  const l = modalDraftLines.find(x=>x.id===id);
-  if(l){ l.qty++; renderModalBatchList(); }
-}
-function decrementBatch(id){
-  const l = modalDraftLines.find(x=>x.id===id);
-  if(l && l.qty>0){ l.qty--; renderModalBatchList(); }
-}
-function setBatchQty(id, val){
-  const l = modalDraftLines.find(x=>x.id===id);
-  if(l){ const n=parseInt(val); l.qty=isNaN(n)||n<0?0:n; }
-}
-function removeModalBatch(id){
-  modalDraftLines = modalDraftLines.filter(x=>x.id!==id);
-  renderModalBatchList();
-}
+function incrementBatch(id){ const l=modalDraftLines.find(x=>x.id===id); if(l){l.qty++;renderModalBatchList();} }
+function decrementBatch(id){ const l=modalDraftLines.find(x=>x.id===id); if(l&&l.qty>0){l.qty--;renderModalBatchList();} }
+function setBatchQty(id,val){ const l=modalDraftLines.find(x=>x.id===id); if(l){const n=parseInt(val);l.qty=isNaN(n)||n<0?0:n;} }
+function removeModalBatch(id){ modalDraftLines=modalDraftLines.filter(x=>x.id!==id); renderModalBatchList(); }
 
 function renderModalBatchList(){
   const list  = document.getElementById('modal-batch-list');
@@ -645,21 +810,15 @@ function closeProductModal(){
     lines = lines.filter(l=>l.product!==activeProduct);
     modalDraftLines.filter(l=>l.qty>0).forEach(l=>lines.push({
       id:l.id, product:activeProduct,
-      batch:l.batch, expiry:l.expiry,
-      qty:l.qty, unit
+      batch:l.batch, expiry:l.expiry, qty:l.qty, unit
     }));
     renderLines();
     renderProductPicker();
   }
   document.getElementById('product-modal').classList.remove('open');
-  activeProduct=null;
-  modalDraftLines=[];
+  activeProduct=null; modalDraftLines=[];
 }
-function removeLine(id){
-  lines = lines.filter(l=>l.id!==id);
-  renderLines();
-  renderProductPicker();
-}
+function removeLine(id){ lines=lines.filter(l=>l.id!==id); renderLines(); renderProductPicker(); }
 
 function renderLines(){
   const wrap = document.getElementById('lines-wrap');
@@ -667,14 +826,10 @@ function renderLines(){
   document.getElementById('save-btn').style.display = totalLines>0?'':'none';
   document.getElementById('line-count-label').textContent = totalLines>0
     ? `${totalLines} batch line${totalLines!==1?'s':''} added` : '';
-
   if(!totalLines){ wrap.innerHTML=''; return; }
 
   const grouped = {};
-  lines.forEach(l=>{
-    if(!grouped[l.product]) grouped[l.product]=[];
-    grouped[l.product].push(l);
-  });
+  lines.forEach(l=>{ if(!grouped[l.product]) grouped[l.product]=[]; grouped[l.product].push(l); });
 
   wrap.innerHTML = Object.entries(grouped).map(([prodName, prodLines])=>{
     const photo = productPhotos[prodName];
@@ -709,6 +864,9 @@ async function saveDispatch(){
     id: uid(),
     date: header.date, time: header.time,
     dest: header.dest, staff: header.staff,
+    chilledResult: header.chilledResult, chilledTemp:  header.chilledTemp,
+    frozenResult:  header.frozenResult,  frozenTemp:   header.frozenTemp,
+    vehicleResult: header.vehicleResult, vehicleNotes: header.vehicleNotes,
     lines: [...lines],
     savedAt: new Date().toISOString()
   };
@@ -720,6 +878,7 @@ async function saveDispatch(){
   document.getElementById('h-time').value=new Date().toTimeString().slice(0,5);
   document.getElementById('h-dest').value='';
   document.getElementById('h-staff').value='';
+  resetChecks();
   goStep1();
   showTab('records');
 
@@ -730,6 +889,9 @@ async function saveDispatch(){
     const rows = dispatch.lines.map(l=>({
       date: dispatch.date, time: dispatch.time,
       dest: dispatch.dest, staff: dispatch.staff,
+      chilledResult: dispatch.chilledResult, chilledTemp:  dispatch.chilledTemp,
+      frozenResult:  dispatch.frozenResult,  frozenTemp:   dispatch.frozenTemp,
+      vehicleResult: dispatch.vehicleResult, vehicleNotes: dispatch.vehicleNotes,
       product: l.product, batch: l.batch,
       expiry: l.expiry, qty: l.qty, unit: l.unit,
       savedAt: dispatch.savedAt
@@ -773,8 +935,12 @@ function renderRecords(){
       : '<span class="sync-badge-pending">⬆ local</span>';
     return `<div class="rec-group">
       <div class="rec-header">
-        <div><div class="rec-title">${d.dest||'—'}</div><div class="rec-meta">${fmtDate(d.date)} at ${fmtTime(d.time)} · ${d.staff||'—'}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;">${syncBadge}<span class="rec-count">${d.lines.length} line${d.lines.length!==1?'s':''}</span></div>
+        <div style="flex:1;min-width:0;">
+          <div class="rec-title">${d.dest||'—'}</div>
+          <div class="rec-meta">${fmtDate(d.date)} at ${fmtTime(d.time)} · ${d.staff||'—'}</div>
+          ${checkBadgesHtml(d)}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">${syncBadge}<span class="rec-count">${d.lines.length} line${d.lines.length!==1?'s':''}</span></div>
       </div>${lineHtml}
     </div>`;
   }).join('<hr style="border:none;border-top:1px solid var(--border);margin:0 0 16px;">');
@@ -882,10 +1048,7 @@ function parseBatchDate(batchNo){
 function onBatchInput(){
   const input=document.getElementById('m-batch-new');
   let val=input.value;
-  if(/^\d{4}$/.test(val)){
-    input.value=val+'GA';
-    val=input.value;
-  }
+  if(/^\d{4}$/.test(val)){ input.value=val+'GA'; val=input.value; }
   const hint=document.getElementById('batch-auto-hint');
   if(val.length>=4){
     const batchDate=parseBatchDate(val);
