@@ -435,7 +435,12 @@ let dispatches    = [];
 let destinations  = [];
 let products      = [];
 let productPhotos = {};
-let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyrvOhAIE7VvL6CbvHMMTSotaEKH0PkOkh2xv05r8B3mFPX3gwprmEjKa-W36VudTES1w/exec', stockCheckUrl: 'https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec', shelfLife:{} };
+// Catalog reads (getFinProducts photos) now served by the batching-api Worker (/catalog),
+// KV-cached (~0.2s vs ~2.4s Apps Script). dispatch's own scriptUrl (writes) is unchanged.
+// ROLLBACK: point CATALOG_URL back at the shared Apps Script:
+// https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec
+const CATALOG_URL = 'https://batching-api.waiyandean.workers.dev/catalog';
+let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyrvOhAIE7VvL6CbvHMMTSotaEKH0PkOkh2xv05r8B3mFPX3gwprmEjKa-W36VudTES1w/exec', stockCheckUrl: CATALOG_URL, shelfLife:{} };
 
 let header          = null;
 let lines           = [];
@@ -459,6 +464,7 @@ async function load() {
   try { const d = localStorage.getItem(SK_DISPATCHES);   if(d) dispatches   = JSON.parse(d); } catch(e){}
   try { const d = localStorage.getItem(SK_DESTINATIONS); if(d) destinations = JSON.parse(d); } catch(e){}
   try { const d = localStorage.getItem(SK_SETTINGS);     if(d) settings     = {...settings,...JSON.parse(d)}; } catch(e){}
+  if(settings.stockCheckUrl!==CATALOG_URL){settings.stockCheckUrl=CATALOG_URL;} // migrate existing iPads off the old shared Apps Script URL cached in localStorage
 
   document.getElementById('s-script-url').value  = settings.scriptUrl  || '';
   document.getElementById('s-stock-url').value   = settings.stockCheckUrl || '';
