@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<script>if(location.hostname==="waiyandean.github.io")location.replace("https://forms.deanops.uk"+location.pathname+location.search+location.hash);</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Dispatch</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -208,7 +209,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
     <div class="header-subtitle">OUTGOING · MAKI &amp; RAMEN</div>
   </div>
   <div class="header-actions">
-    <a href="https://waiyandean.github.io/home/" class="pill">← Home</a>
+    <a href="/home/" class="pill">← Home</a>
     <div class="pill" id="sync-status">● sheets</div>
   </div>
 </header>
@@ -435,12 +436,17 @@ let dispatches    = [];
 let destinations  = [];
 let products      = [];
 let productPhotos = {};
-// Catalog reads (getFinProducts photos) now served by the batching-api Worker (/catalog),
-// KV-cached (~0.2s vs ~2.4s Apps Script). dispatch's own scriptUrl (writes) is unchanged.
-// ROLLBACK: point CATALOG_URL back at the shared Apps Script:
+// Same-origin now: this page is served by the `forms` Worker at
+// forms.deanops.uk/dispatch/, which also serves the API under /api/*.
+// Relative URLs => no CORS, and rollback is a one-line revert.
+// ROLLBACK (pre-monorepo catalog cutover): 'https://batching-api.waiyandean.workers.dev/catalog'
+// ROLLBACK (original shared Apps Script):
 // https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec
-const CATALOG_URL = 'https://batching-api.waiyandean.workers.dev/catalog';
-let settings      = { scriptUrl: 'https://script.google.com/macros/s/AKfycbyrvOhAIE7VvL6CbvHMMTSotaEKH0PkOkh2xv05r8B3mFPX3gwprmEjKa-W36VudTES1w/exec', stockCheckUrl: CATALOG_URL, shelfLife:{} };
+const CATALOG_URL  = '/api/catalog';
+// Dispatch's own write/read backend, ported off Apps Script to the `forms` Worker.
+// ROLLBACK: 'https://script.google.com/macros/s/AKfycbyrvOhAIE7VvL6CbvHMMTSotaEKH0PkOkh2xv05r8B3mFPX3gwprmEjKa-W36VudTES1w/exec'
+const DISPATCH_URL = '/api/dispatch';
+let settings      = { scriptUrl: DISPATCH_URL, stockCheckUrl: CATALOG_URL, shelfLife:{} };
 
 let header          = null;
 let lines           = [];
@@ -465,6 +471,7 @@ async function load() {
   try { const d = localStorage.getItem(SK_DESTINATIONS); if(d) destinations = JSON.parse(d); } catch(e){}
   try { const d = localStorage.getItem(SK_SETTINGS);     if(d) settings     = {...settings,...JSON.parse(d)}; } catch(e){}
   if(settings.stockCheckUrl!==CATALOG_URL){settings.stockCheckUrl=CATALOG_URL;} // migrate existing iPads off the old shared Apps Script URL cached in localStorage
+  if(settings.scriptUrl!==DISPATCH_URL){settings.scriptUrl=DISPATCH_URL;} // migrate existing iPads off dispatch's own old Apps Script URL cached in localStorage
 
   document.getElementById('s-script-url').value  = settings.scriptUrl  || '';
   document.getElementById('s-stock-url').value   = settings.stockCheckUrl || '';
